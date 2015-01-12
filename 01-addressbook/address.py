@@ -16,7 +16,7 @@ import re
 import cPickle
 
 # Program settings
-file_name = "./contacts.pkl" # File name for data
+file_name = "./contacts.dat" # File name for data
 entry_types = ('Name', 'Phone Number', 'Email', 'Street Address', 'City', 
     'State', 'Zipcode') # Default list of address book fields. DO NOT CHANGE!
 
