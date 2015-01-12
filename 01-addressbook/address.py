@@ -1,179 +1,186 @@
 #
-# Phone Book Manager
+# Address Book Manager
 #
-# A simple program that creates and manages a phone book file.
-# Names and phone numbers are saved as a JSON text file in the
-# same directory as this program.
+# A simple program that creates and manages an address book.
+# Names, phone numbers, etc. are saved as a pickle data file.
 #
 # Joshua Ferdaszewski
 # PDX Code Guild Student - January 8, 2015
 #
 
-import sys
-import json
-import re
+# TODO: Add ability to enter arbitrary keys for specific contacts
+# TODO: PEP 8 style guide adjustments
 
+import sys
+import re
+import cPickle
+
+# Program settings
+file_name = "./contacts.dat" # File name for data
+entry_types = ('Name', 'Phone Number', 'Email', 'Street Address', 'City', 
+    'State', 'Zipcode') # Default list of address book fields. DO NOT CHANGE!
 
 def display():
     # Open file and read into memory
-    tel = loadfile()
-
-    # clear screen
+    address_book = loadfile()
     clear()
 
-    # Print phone book to screen in alpha order
-    print "      NAME%-15s -  PHONE NUMBER" %('')
-    for name in sorted(tel.keys()):
-        print "%-25s - %s" % (name, tel[name])
+    # Display names only or complete address book?
+    if raw_input("Display a list of names only? y/n: ") in ('y', 'Y'):
+        clear()
+        print "\t\tAddress Book: Names List\n\n"
+        print "\n".join(sorted(address_book.keys()))
+
+    # Print entire address book to screen in alpha order
+    else:
+        clear()
+        print "\t\tAddress Book: All Contacts\n"
+        for name in sorted(address_book.keys()):
+            print_contact(address_book[name])
     pause()
 
 
-def find(delete):
-    # Load phone book and clear screen
-    tel = loadfile()
+def print_contact(contact):
+    # Display a contact's information line by line
+    print ""
+    for entry in entry_types:
+        print "%-14s : %s" % (entry, contact[entry])
+
+def find():
+    # Load address book
+    address_book = loadfile()
         
-    # Prompt user for name to search
-    clear()
-    
     # Loop untill user has only one name or gives up
-    looking = True
-    while looking:
-        query = raw_input("\nWhat name would you like to search for? ")
+    clear()
+    while True:
+        query = raw_input("\nEnter contact name: ")
 
         # Find partial matches
         names_match = []
-        for name in sorted(tel.keys()):
-            if len(re.findall(query, name)) > 0:
+        for name in sorted(address_book.keys()):
+
+            # compare lower case strings
+            if len(re.findall(query.lower(), name.lower())) > 0:
                 names_match.append(name)
 
-        # If only one name found, display that one name
-        if len(names_match) == 1:            
-            # Make sure query matches key exactly and print
-            query = names_match[0]
-            print "\n:)  ", query, ":", tel[query]
-            looking = False
+        # We found a match!
+        if query in address_book:
+            print "\n:)"
+            print_contact(address_book[query])
             pause()
+            break
 
-        # Display partial matches and 
+        # Display partial matches
         elif len(names_match) > 0:
-            print "Did you mean?"
+            print "Did you mean?\n"
             for name in names_match:
                 print name
-            print "Type name exactly as it appears above."
+            print "\nType name exactly as it appears above."
+            continue    
 
         # Name not found and no match
         else:
-            print "\n:(\t%s is NOT in your phonebook" % (query)
+            print "\n:(\t%s is NOT a contact in your address book." % (query)
 
-        # Try again?
-        searching = raw_input("Search again? y/n >")
-        if searching in ('y', 'Y'):
-            looking = True
-        else:
-            return
+            # Try again?
+            if not raw_input("Try again? y/n: ") in ('y', 'Y'):
+                break
+    return query
 
-    # If user wants to remove this entry
-    if delete:
-        # Verify that this entry should be removed
-        confirm = raw_input("Delete %s? (y/n) >" % (query))
-        if confirm in ('y', 'Y'):
-            # Remove and write to file
-            del tel[query]
-            writefile(tel)
-            print query, "removed from phone book."
-        else:
-            print "Delete aborted", query, "NOT removed."
-        pause()
+
+def delete():
+    # Find user name to delete
+    name = find()
+    address_book = loadfile()
+
+    # Verify that this entry should be removed
+    if raw_input("Delete %s? (y/n): " % (name)) in ('y', 'Y'):
+        
+        # Remove and write to file
+        del address_book[name]
+        writefile(address_book)
+        print "Removed %s from address book." % name
+    else:
+        print "Delete aborted", name, "NOT removed."
+    pause()
 
 
 def add():
-    # Open file and load phone book
-    tel = loadfile()
+    # Open file and load address book
+    address_book = loadfile()
 
-    # Continue while user is entering new names
+    # Continue while user is entering new contacts
     while True:
-        # Clear screen and prompt user for name to enter
-        clear()
-        newName = raw_input("\tName for new entry: ")
+        
+        # Gather information about new contact
+        clear()        
+        print "Enter information for your new contact."
+        new_contact = {}
+        for entry in entry_types:
+            new_contact[entry] = raw_input("Enter %s: " % entry)
 
-        # Check for existing name
-        if newName in tel:
-            print "Already in Phone Book!"
-            print newName, ":", tel[newName]
-            if not raw_input("Update phone number? y/n >") in ('y', 'Y'):
-                return
+        # Check if name exists already
+        if new_contact["Name"] in address_book:
+            print "\nThis contact alread in address book!"
+            print_contact(new_contact)
 
-        # Prompt user for phone number and validate
-        while True:
-             # Prompt user for phone number
-            print "\t(Enter 10 digit phone number with no spaces or other characters)"
-            newPhone = raw_input("\tPhone number for %s: " % (newName))
-
-            # 10 digits only
-            if len(newPhone) == 10 and newPhone.isdigit():
+            # If it does, update this existing contact?
+            if not raw_input("\nUpdate %s with contact info above? y/n: " 
+                % new_contact["Name"]) in ('y', 'Y'):
                 break
 
-            # Throw error at user, invalid phone number
-            print "Invalid phone number. Please enter as [1234567890]"
-
-        # add new item to dict with formated phone number
-        tel[newName] = newPhone[0:3] + "-" + newPhone[3:6] + "-" + newPhone[6:]
+        # Add the new contact to the address book
+        address_book[new_contact["Name"]] = new_contact
 
         # Do it again?
-        if not raw_input("Add another name? y/n>") in ('y', 'Y'):
+        if not raw_input("\nAdd another name? y/n: ") in ('y', 'Y'):
             break
 
-    # Write updated phone book to file
-    writefile(tel)
+    # Write updated address book to file
+    writefile(address_book)
 
 
 def delete_all():
-    # Clear screen and verify that user wants to remove entire phonebook
+    # Clear screen and verify that user wants to remove entire address book
     clear()
-    print "Delete entire Phonebook.\nThis cannot be undone!"
-    if raw_input("Are you sure? y/n >") in ('y', 'Y'):
-        
-        # open file and overwrite
-        f = open("./addresses.txt", 'w')
-        f.truncate()
-        f.close()
-        print "Phonebook deleted"
+    print "Delete entire Address Book?\nThis cannot be undone!"
+    if raw_input("Delete all contacts from Address Book? y/n: ") in ('y', 'Y'):
+        os.remove(file_name)
+        print "All contacts deleted"
     else:
-        print "Delete aborted.  Phonebook NOT removed."
-
+        print "Delete aborted.  Contacts NOT removed."
     pause()
 
 
 
 def loadfile():    
     # Open address file, create it if needed
-    f = open("./addresses.txt", 'a+')
+    f = open(file_name, 'a+')
     
-    # Read file into memory, if a file is empty, create and empty dict 'tel'
+    # Read file into memory, if a file is empty, create and empty dict
     try:
-        tel = json.load(f)
-    except ValueError:
-        tel = {}
+        address_data = cPickle.load(f)
+    except(ValueError, EOFError):
+        address_data = {}
 
-    # Close file and return the phone book
+    # Close file and return the address book
     f.close()
-    return tel
+    return address_data
 
 
-def writefile(tel):
+def writefile(address_data):
     # open file to overwrite
-    f =  open("./addresses.txt", 'w')
+    f =  open(file_name, 'w')
 
-    # Write the phone book to file as JSON text
-    json.dump(tel, f)
+    # Write the address book to file as pickle data
+    cPickle.dump(address_data, f)
 
     # Close file
     f.close()
 
 
 def pause():
-    print "\n"
-    raw_input ("Press Enter")
+    raw_input ("\nPress Enter")
 
 
 def clear():
@@ -189,17 +196,17 @@ def menu():
     # clear terminal then display menu
     clear()
     sel = None
-    print "\t  Welcome to PHONEBOOK!\n\n"
-    print "\t1) List Phone Numbers"
-    print "\t2) Find Name"
-    print "\t3) Add Phone Number"
-    print "\t4) Remove a Phone Number"
-    print "\t5) Delete All Phone Numbers"
-    print "\t6) Quit\n\n\t"
+    print "\t  Welcome to ADDRESS BOOK!\n\n"
+    print "\t1) List All Contacts"
+    print "\t2) Find Contact by Name"
+    print "\t3) Add Contact"
+    print "\t4) Remove a contact"
+    print "\t5) Delete All contacts"
+    print "\t6) Quit\n\n"
 
     # Wait for valid user input
     while sel not in ('1', '2', '3', '4', '5', '6'):   
-        sel = raw_input("select an option: ")
+        sel = raw_input("Select an option: ")
 
     # Return valid menu selection
     return sel
@@ -212,11 +219,11 @@ def main():
         if selection == '1':
             display()
         elif selection == '2':
-            find(False)
+            find()
         elif selection == '3':
             add()
         elif selection == '4':
-            find(True)
+            delete()
         elif selection == '5':
             delete_all()
         else:
