@@ -8,6 +8,7 @@
 # PDX Code Guild Student - January 8, 2015
 #
 
+# TODO: Seperate read and write to file to menu commands
 # TODO: Add ability to enter arbitrary keys for specific contacts
 # TODO: PEP 8 style guide adjustments
 # TODO: Remove name key from contact (not needed as it is the master key)
@@ -189,6 +190,31 @@ def writefile(address_data):
     f.close()
 
 
+def load_external_file():
+    # Get file and open it for reading
+    clear()
+    import_file = raw_input("Path to file: ")
+    try:
+        f = open(import_file, 'r')
+    except:
+        print "Invalid file."
+
+    # Check with if overwrite or append is desired
+    if raw_input("Overwrite existing contacts? y/n: ") in ('y', 'Y'):
+        print "Deleting existing contacts..."
+        pause()
+        delete_all()
+        # TODO: Create empty dict
+    else:
+        print "Appending to existing contacts..."
+        # TODO: Load existing contacts
+
+    # TODO: Read file to import, check type
+    # TODO: Match keys from import file to existing keys
+    # TODO: Append import keys to address book dict
+    # TODO: Write updated address book to app file
+
+
 def pause():
     raw_input ("\nPress Enter")
 
@@ -211,10 +237,11 @@ def menu():
     print "\t3) Add Contact"
     print "\t4) Remove a contact"
     print "\t5) Delete All contacts"
-    print "\t6) Quit\n\n"
+    print "\t6) Load contacts from file"
+    print "\t7) Quit\n\n"
 
     # Wait for valid user input
-    while sel not in ('1', '2', '3', '4', '5', '6'):   
+    while sel not in ('1', '2', '3', '4', '5', '6', '7'):   
         sel = raw_input("Select an option: ")
 
     # Return valid menu selection
@@ -235,6 +262,11 @@ def main():
             delete()
         elif selection == '5':
             delete_all()
+        elif selection == '6':
+            load_external_file()
+        elif selection == '7':
+            print "Thank you for using Address Book!\nGoodby."
+            break
         else:
             break
 
