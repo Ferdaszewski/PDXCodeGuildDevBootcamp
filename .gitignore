@@ -1,2 +1,5 @@
-# Address data file (binary)
+# Address Book data file (binary)
 *.dat
+
+# Address Book json data file
+*.json
