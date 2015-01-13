@@ -155,7 +155,11 @@ def delete_all():
 
 def loadfile():    
     # Open address file, create it if needed
-    f = open(file_name, 'a+')
+    try:
+        f = open(file_name, 'r')
+    except:
+        address_data = {}
+        return address_data
     
     # Read file into memory, if a file is empty, create and empty dict
     try:
@@ -185,8 +189,7 @@ def pause():
 
 def clear():
     # Clear screen, return cursor to top left
-    # Thank you to Graham King http://www.darkcoding.net/
-    # For this code snippit
+    # Thanks to Graham King http://www.darkcoding.net for this code snippit
     sys.stdout.write('\033[2J')
     sys.stdout.write('\033[H')
     sys.stdout.flush()
