@@ -8,8 +8,8 @@
 # PDX Code Guild Student - January 8, 2015
 #
 
-# TODO: Seperate read and write to file to menu commands
 # TODO: Add ability to enter arbitrary keys for specific contacts
+# TODO: Add ability to parse diverse json data not just [{}]
 # TODO: PEP 8 style guide adjustments
 # TODO: Remove name key from contact (not needed as it is the master key)
 # TODO: Add ability to import from json file
@@ -23,6 +23,10 @@ import json
 file_name = "./contacts.json" # File name for data
 entry_types = ('Name', 'Phone Number', 'Email', 'Street Address', 'City', 
     'State', 'Zipcode') # Default list of address book fields. DO NOT CHANGE!
+
+# Contact entry map - key (import entry) maps to value (entry_types)
+import_map = {"first_name": "Name", "email":"Email", 
+    "phone_number": "Phone Number", "address": "Street Address"}
 
 def display():
     # Open file and read into memory
@@ -125,12 +129,17 @@ def add():
 
         # Check if name exists already
         if new_contact["Name"] in address_book:
-            print "\nThis contact alread in address book!"
+            print "\nThis name is already in your address book!"
+            print "\n\n--Current Contact--"
+            print print_contact(address_book[new_contact["Name"]])
+            print "\n\n--New Contact--"
             print_contact(new_contact)
 
-            # If it does, update this existing contact?
-            if not raw_input("\nUpdate %s with contact info above? y/n: " 
+            # Does the user want to update contact?
+            if not raw_input("\nUpdate %s with New Contact info above? y/n: " 
                 % new_contact["Name"]) in ('y', 'Y'):
+                print "%s not updated." % new_contact["Name"]
+                pause()
                 break
 
         # Add the new contact to the address book
@@ -156,7 +165,9 @@ def delete_all():
         print "All contacts deleted"
     else:
         print "Delete aborted.  Contacts NOT removed."
+        return 1
     pause()
+    return 0
 
 
 
@@ -198,18 +209,70 @@ def load_external_file():
         f = open(import_file, 'r')
     except:
         print "Invalid file."
-
-    # Check with if overwrite or append is desired
-    if raw_input("Overwrite existing contacts? y/n: ") in ('y', 'Y'):
-        print "Deleting existing contacts..."
         pause()
-        delete_all()
-        # TODO: Create empty dict
+        return
+
+    # Overwrite or append existing data?
+    if raw_input("Overwrite existing contacts? y/n: ") in ('y', 'Y'):
+        
+        # If delete of program data file fails, abort.
+        if delete_all() != 0:
+            print "Error deleting file, please try again.\nReturning to menu."
+            pause()
+            return
+        address_book = {}
     else:
         print "Appending to existing contacts..."
-        # TODO: Load existing contacts
+        address_book = loadfile()
 
-    # TODO: Read file to import, check type
+    # Read json data, if any error, abort
+    try:
+        import_data = json.load(f)
+    except Exception, e:
+        print "Error with file data. Error message:\n", e
+        pause()
+        return
+
+    # For each dict in the imported list, map the dictonary keys
+    update_all = None
+    for new_contact in import_data:
+        for entry in new_contact.keys():
+            new_contact[import_map[entry]] = new_contact.pop(entry)
+
+        # Check if name exists already
+        if new_contact["Name"] in address_book:
+
+            # Ask if user wants to update (or not) for all duplicates
+            if update_all not in ('y', 'Y'):
+                print "\nThis name is already in your address book!"
+                print "--New Contact--"
+                print_contact(new_contact)
+                print "--Current Contact--"
+                print_contact(address_book[new_contact["Name"]])
+
+                # Update info or not, do the same for all or just one.
+                update = raw_input("\nUpdate %s with New Contact info above? y/n: "
+                    % new_contact["Name"])
+                update_all = raw_input("Do this for all duplicate contacts? y/n: ")
+
+
+
+
+        else:
+            # Add the new contact to the address book
+            address_book[new_contact["Name"]] = new_contact
+
+
+
+
+
+
+
+    print address_book
+    pause()
+
+
+
     # TODO: Match keys from import file to existing keys
     # TODO: Append import keys to address book dict
     # TODO: Write updated address book to app file
@@ -265,7 +328,8 @@ def main():
         elif selection == '6':
             load_external_file()
         elif selection == '7':
-            print "Thank you for using Address Book!\nGoodby."
+            clear()
+            print "Thank you for using Address Book!\nGoodbye.\n"
             break
         else:
             break
