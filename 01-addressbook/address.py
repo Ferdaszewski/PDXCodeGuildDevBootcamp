@@ -2,7 +2,7 @@
 # Address Book Manager
 #
 # A simple program that creates and manages an address book.
-# Names, phone numbers, etc. are saved as a pickle data file.
+# Names, phone numbers, etc. are saved in a json text file.
 #
 # Joshua Ferdaszewski
 # PDX Code Guild Student - January 8, 2015
@@ -10,13 +10,16 @@
 
 # TODO: Add ability to enter arbitrary keys for specific contacts
 # TODO: PEP 8 style guide adjustments
+# TODO: Remove name key from contact (not needed as it is the master key)
+# TODO: Add ability to import from json file
 
 import sys
+import os
 import re
-import cPickle
+import json
 
 # Program settings
-file_name = "./contacts.dat" # File name for data
+file_name = "./contacts.json" # File name for data
 entry_types = ('Name', 'Phone Number', 'Email', 'Street Address', 'City', 
     'State', 'Zipcode') # Default list of address book fields. DO NOT CHANGE!
 
@@ -145,7 +148,10 @@ def delete_all():
     clear()
     print "Delete entire Address Book?\nThis cannot be undone!"
     if raw_input("Delete all contacts from Address Book? y/n: ") in ('y', 'Y'):
-        os.remove(file_name)
+        try:
+            os.remove(file_name)
+        except OSError:
+            print "No data file"
         print "All contacts deleted"
     else:
         print "Delete aborted.  Contacts NOT removed."
@@ -163,7 +169,7 @@ def loadfile():
     
     # Read file into memory, if a file is empty, create and empty dict
     try:
-        address_data = cPickle.load(f)
+        address_data = json.load(f)
     except(ValueError, EOFError):
         address_data = {}
 
@@ -177,7 +183,7 @@ def writefile(address_data):
     f =  open(file_name, 'w')
 
     # Write the address book to file as pickle data
-    cPickle.dump(address_data, f)
+    json.dump(address_data, f)
 
     # Close file
     f.close()
