@@ -12,7 +12,6 @@
 # TODO: Add ability to parse diverse json data not just [{}]
 # TODO: PEP 8 style guide adjustments
 # TODO: Remove name key from contact (not needed as it is the master key)
-# TODO: Add ability to import from json file
 
 import sys
 import os
@@ -233,11 +232,18 @@ def load_external_file():
         pause()
         return
 
-    # For each dict in the imported list, map the dictonary keys
+    # For each dict in the imported list, map the keys and write to address book
     update_all = None
     for new_contact in import_data:
+
+        # Map existing keys
         for entry in new_contact.keys():
             new_contact[import_map[entry]] = new_contact.pop(entry)
+
+        # Assign an empty string to all required, non empty keys
+        for entry in entry_types:
+            if entry not in new_contact.keys():
+                new_contact[entry] = ""
 
         # Check if name exists already
         if new_contact["Name"] in address_book:
@@ -255,27 +261,20 @@ def load_external_file():
                     % new_contact["Name"])
                 update_all = raw_input("Do this for all duplicate contacts? y/n: ")
 
+            # Update existing name
+            if update in ('y', 'Y'):
+                # Add the new contact to the address book
+                address_book[new_contact["Name"]] = new_contact
 
-
-
+        # This is a new name, add it to the address book
         else:
-            # Add the new contact to the address book
             address_book[new_contact["Name"]] = new_contact
 
+    # Write updated address book to file
+    writefile(address_book)
 
-
-
-
-
-
-    print address_book
+    print "File import sucsessful!"
     pause()
-
-
-
-    # TODO: Match keys from import file to existing keys
-    # TODO: Append import keys to address book dict
-    # TODO: Write updated address book to app file
 
 
 def pause():
