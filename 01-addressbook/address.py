@@ -207,7 +207,7 @@ def menu():
     sel = None
     print "\t  Welcome to ADDRESS BOOK!\n\n"
     print "\t1) List All Contacts"
-    print "\t2) Find Contact by Name"
+    print "\t2) Find/Update Contact by Name"
     print "\t3) Add Contact"
     print "\t4) Remove a contact"
     print "\t5) Delete All contacts"
