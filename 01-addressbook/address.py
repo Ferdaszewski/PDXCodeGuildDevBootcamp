@@ -175,8 +175,7 @@ def loadfile():
     try:
         f = open(file_name, 'r')
     except:
-        address_data = {}
-        return address_data
+        return {}
     
     # Read file into memory, if a file is empty, create and empty dict
     try:
@@ -191,13 +190,9 @@ def loadfile():
 
 def writefile(address_data):
     # open file to overwrite
-    f =  open(file_name, 'w')
-
-    # Write the address book to file as pickle data
-    json.dump(address_data, f)
-
-    # Close file
-    f.close()
+    with open(file_name, 'w') as f:
+        # Write the address book to file as pickle data
+        json.dump(address_data, f)
 
 
 def load_external_file():
