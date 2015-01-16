@@ -12,11 +12,13 @@
 # TODO: Add ability to parse diverse json data not just [{}]
 # TODO: PEP 8 style guide adjustments
 # TODO: Remove name key from contact (not needed as it is the master key)
+# TODO: Refactor - use with...as in loadfile()
 
 import sys
 import os
 import re
 import json
+import os.path
 
 # Program settings
 file_name = "./contacts.json" # File name for data
@@ -171,21 +173,18 @@ def delete_all():
 
 
 def loadfile():    
-    # Open address file, create it if needed
-    try:
-        f = open(file_name, 'r')
-    except:
+    # Open address book file, create it if needed
+    if not os.path.isfile(file_name):
+        # Return empty address book if file does not exist
         return {}
-    
-    # Read file into memory, if a file is empty, create and empty dict
-    try:
-        address_data = json.load(f)
-    except(ValueError, EOFError):
-        address_data = {}
 
-    # Close file and return the address book
-    f.close()
-    return address_data
+    # Read file into memory, if the file is empty, create an empty dict
+    with open(file_name, 'r') as f:
+        try:
+            address_data = json.load(f)
+        except(ValueError, EOFError):
+            address_data = {}
+        return address_data
 
 
 def writefile(address_data):
@@ -206,6 +205,14 @@ def load_external_file():
         pause()
         return
 
+    # Read json data, if any error, abort
+    try:
+        import_data = json.load(f)
+    except Exception, e:
+        print "Error with file data. Error message:\n", e
+        pause()
+        return
+
     # Overwrite or append existing data?
     if raw_input("Overwrite existing contacts? y/n: ") in ('y', 'Y'):
         
@@ -218,14 +225,6 @@ def load_external_file():
     else:
         print "Appending to existing contacts..."
         address_book = loadfile()
-
-    # Read json data, if any error, abort
-    try:
-        import_data = json.load(f)
-    except Exception, e:
-        print "Error with file data. Error message:\n", e
-        pause()
-        return
 
     # For each dict in the imported list, map the keys and write to address book
     update_all = None
