@@ -3,3 +3,6 @@
 
 # Address Book json data file
 *.json
+
+# compiled python module files
+*.pyc
