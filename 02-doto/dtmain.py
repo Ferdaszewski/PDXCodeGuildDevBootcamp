@@ -8,8 +8,7 @@ import doto
 
 class DoToApp(object):
     def __init__(self):
-        self.master_collection = doto.Storage()
-        self.cur_collection = self.master_collection[0]
+        self.storage = doto.Storage()
     
     def load(self):
         """Initial loading screen, user selects where to load/save data.
@@ -18,8 +17,13 @@ class DoToApp(object):
         print "Welcome to Do To! What is your name?"
         name = raw_input("> ")
 
+        # List of collections, index 0 is default
+        self.master_collection = self.storage.load(name)
+        self.current_collection = self.master_collection[0]
+
         # TODO: if this is a new user, prompt create a new user?
         # TODO: User class needed?
+
 
         self.main(name)
 
@@ -30,30 +34,34 @@ class DoToApp(object):
         collection in master_collection and loops until user quits.
         """
         command = ""
-        while command not in ('q', "quit"):
+        sort_var = "due_date"
+        while True:
             self.clear_screen(user)
-            self.cur_collection.display('term')
+            self.current_collection.display(sort_var)
             command = raw_input(
                 "\nEnter command (? for help) > ").strip().lower()
 
             if command in ('s', 'save'):
-                self.master_collection.save()
+                self.storage.save(self.master_collection)
             elif command in ('l', 'load'):
-                self.master_collection.load()
-                self.cur_collection = self.master_collection[0]
+                self.master_collection = self.storage.load(user)
+                self.current_collection = self.master_collection[0]
             elif command in ('n', 'new'):
-                self.cur_collection.add()
+                # TODO create new_task, handle exceptions
+                new_task = None
+                self.current_collection.add(new_task)
             elif command in ('e', 'select'):
-                selcted_task = self.cur_collection.find()
-                # TODO: prompt user to delete or change selected task
+                selcted_task = self.current_collection.find()
+                # TODO: prompt user to delete or change selected task, mark as done.
             elif command in ('c', 'change'):
-                # TODO: Get index of collection that user wants to switch to
-                coll_index = 0
-                self.cur_collection = self.master_collection.change_coll(coll_index)
+                # TODO: Get index of collection that user wants to switch to or create new collection
+                index = 0
+                self.current_collection = self.master_collection[index]
             elif command in ('o', 'order'):
                 # TODO: prompt user for attribute to sort by
-                # TODO: figure out best way to handle default sort
-                self.cur_collection.sort
+                sort_var = ""
+            elif command in ('q', "quit"):
+                return
             else:
                 self.clear_screen(user)
                 raw_input("Invalid command. Press Enter to try again ")
