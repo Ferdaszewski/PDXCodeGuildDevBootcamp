@@ -23,10 +23,7 @@ class DoToApp(object):
 
         # TODO: if this is a new user, prompt create a new user?
         # TODO: User class needed?
-
-
         self.main(name)
-
 
 
     def main(self, user):
@@ -47,9 +44,25 @@ class DoToApp(object):
                 self.master_collection = self.storage.load(user)
                 self.current_collection = self.master_collection[0]
             elif command in ('n', 'new'):
-                # TODO create new_task, handle exceptions
-                new_task = None
-                self.current_collection.add(new_task)
+                
+                # Continue until a new task is created correctly
+                self.clear_screen(user)
+                print "Create a new task."
+                description = raw_input(
+                    "Enter task (140 characters max) > ")
+                due_date = raw_input(
+                    "Enter due date as 'mm-dd-year' (optional). > ")
+                tags = raw_input(
+                    "Enter tags for the task (optional). > ")
+                tag_list = tags.strip().split()
+                try:
+                    new_task = doto.Task(user, description,
+                        due_date, tag_list)
+                except (NameError, ValueError) as e:
+                    print "Task not created. Error: ", e
+                    raw_input("Press Enter to continue.")
+                    continue
+                self.current_collection.add([new_task])
             elif command in ('e', 'select'):
                 selcted_task = self.current_collection.find()
                 # TODO: prompt user to delete or change selected task, mark as done.
@@ -65,10 +78,6 @@ class DoToApp(object):
             else:
                 self.clear_screen(user)
                 raw_input("Invalid command. Press Enter to try again ")
-
-
-                
-
 
 
     def clear_screen(self, user=""):
