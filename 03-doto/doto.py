@@ -1,13 +1,14 @@
 """Module with classes for List DoTo application.
 """
 import datetime
+import collections
 
 
 class Collection(object):
-    def __init__(self, collection_name, task_list):
+    def __init__(self, collection_name):
         # tasks is a dict with due_date of task as key, then list of
         # tasks organized by entry_time
-        self.tasks = self.add(task_list)
+        self.tasks = defaultdict(list)
         self.collection_name = collection_name
 
     def display(self, sort):
@@ -17,23 +18,13 @@ class Collection(object):
             for task in task_list:
                 print task
 
-    def add(self, task_list):
+    def add(self, new_task):
         """Add a task to this collection.
 
         Args:
-        task_list (list of Tasks): A list of at least one Task object
+        new_task (a Task object): One Task object to add to collection
         """
-        try:
-            task_dict = self.tasks
-        except AttributeError:
-            task_dict = {}
-
-        for task in task_list:
-            try:
-                task_dict[task.due_date].append(task)
-            except KeyError:
-                task_dict[task.due_date] = [task]
-        return task_dict
+        self.tasks[new_task.getdue_date()].append(new_task)
 
     def delete(self):
         pass
