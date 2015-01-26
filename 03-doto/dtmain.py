@@ -18,7 +18,7 @@ class DoToApp(object):
         name = raw_input("> ")
 
         # List of collections, index 0 is default
-        self.master_collection = self.storage.load(name)
+        self.master_collection = [self.storage.load(name)]
         self.current_collection = self.master_collection[0]
 
         # TODO: if this is a new user, prompt create a new user?
@@ -53,8 +53,9 @@ class DoToApp(object):
                 due_date = raw_input(
                     "Enter due date as 'mm-dd-year' (optional). > ")
                 tags = raw_input(
-                    "Enter tags for the task (optional). > ")
-                tag_list = tags.strip().split()
+                    "Enter tags for the task separated by commas (optional). > ")
+                tag_list = [tag.strip() for tag in tags.split(',')]
+
                 try:
                     new_task = doto.Task(user, description,
                         due_date, tag_list)
@@ -62,7 +63,7 @@ class DoToApp(object):
                     print "Task not created. Error: ", e
                     raw_input("Press Enter to continue.")
                     continue
-                self.current_collection.add([new_task])
+                self.current_collection.add(new_task)
             elif command in ('e', 'select'):
                 selcted_task = self.current_collection.find()
                 # TODO: prompt user to delete or change selected task, mark as done.

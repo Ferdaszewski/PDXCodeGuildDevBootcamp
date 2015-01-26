@@ -8,7 +8,7 @@ class Collection(object):
     def __init__(self, collection_name):
         # tasks is a dict with due_date of task as key, then list of
         # tasks organized by entry_time
-        self.tasks = defaultdict(list)
+        self.tasks = collections.defaultdict(list)
         self.collection_name = collection_name
 
     def display(self, sort):
@@ -16,7 +16,11 @@ class Collection(object):
         for date, task_list in self.tasks.items():
             print "\nDue Date:", date
             for task in task_list:
-                print task
+                checked = " "
+                if task.done is True:
+                    checked = "X"
+                print "[{0}] {1}\n*Tags* | {2} |".format(checked, task._entry,
+                    ' | '.join(task.tags))
 
     def add(self, new_task):
         """Add a task to this collection.
@@ -24,7 +28,7 @@ class Collection(object):
         Args:
         new_task (a Task object): One Task object to add to collection
         """
-        self.tasks[new_task.getdue_date()].append(new_task)
+        self.tasks[new_task.due_date].append(new_task)
 
     def delete(self):
         pass
@@ -72,16 +76,18 @@ class Task(object):
         Methods:
 
         """
-        # Required task elements
-        self._entry = self.setentry(description) # 0 to 140 characters
-        self._due_date = self.setdue_date(date_due) # mm-dd-year
+        # Required elements
+        self._entry = None
+        self.setentry(description)
+        self._due_date = None
+        self.setdue_date(date_due)
 
-        # Optional task elements
+        # Optional elements
         self.tags = [user]
         if tag is not None:
             [self.tags.append(item) for item in tag]
 
-        # Generated task elements
+        # Generated elements
         self.entry_time = datetime.datetime.today()
         self.id = 0 # TODO - Hash to match cloud storage?
         self.creator = user
@@ -90,13 +96,11 @@ class Task(object):
         self.done_user= None
 
     
-    # Entry required to be string of length 0 to 140 characters.
     def getentry(self):
         return self._entry
 
     def setentry(self, value):
-        chars = len(value)
-        if chars > 140:
+        if len(value) > 140:
             raise ValueError("Task entry cannot be more than 140 characters")
         self._entry = value
 
@@ -126,17 +130,13 @@ class Task(object):
     due_date = property(getdue_date, setdue_date, deldue_date)
 
     def __str__(self):
-        if self.done:
-            check = 'X'
-        else:
-            check = ' '
-
-        s = "[%1s] %s *Tags* %s" % (check, self.entry, self.tags)
-
-        return s
-
-
-    
+        s = "ID: " + str(self.id)
+        s += "\nTask: {0}\nDue Date: {1}\nTags: {2}\n".format(self._entry,
+            self._due_date, self.tags)
+        s += "Created By: {0} {1}\nDone?: {2}\nMarked Done By: {3} {4}".format(
+            self.creator, self.entry_time, self.done,
+            self.done_user, self.done_date)
+        return s    
 
 
 
@@ -152,7 +152,9 @@ class Storage(object):
         # TODO: load collections from file
         # TEMP - load collection with one temp task
         new_task = Task(user, "This is a temporary task with no due date.")
-        return [Collection("temp collection", [new_task])]
+        new_collection = Collection("temp collection")
+        new_collection.add(new_task)
+        return new_collection
 
     def read(self):
         # static or class methods?
