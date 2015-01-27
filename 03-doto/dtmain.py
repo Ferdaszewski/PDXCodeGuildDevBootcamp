@@ -71,9 +71,9 @@ class DoToApp(object):
                 # TODO: Get index of collection that user wants to switch to or create new collection
                 index = 0
                 self.current_collection = self.master_collection[index]
-            elif command in ('o', 'order'):
+            elif command in ('f', 'filter'):
                 # TODO: prompt user for attribute to sort by
-                sort_var = ""
+                tilter_var = ""
             elif command in ('q', "quit"):
                 return
             else:

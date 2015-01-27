@@ -11,7 +11,7 @@ class Collection(object):
         self.tasks = collections.defaultdict(list)
         self.collection_name = collection_name
 
-    def display(self, sort):
+    def display(self, filter_var):
         print "\t\t" + self.collection_name
         for date, task_list in self.tasks.items():
             print "\nDue Date:", date
@@ -26,12 +26,28 @@ class Collection(object):
         """Add a task to this collection.
 
         Args:
-        new_task (a Task object): One Task object to add to collection
+        new_task (a Task object): A Task object to add to collection
         """
         self.tasks[new_task.due_date].append(new_task)
 
-    def delete(self):
-        pass
+    def delete(self, task):
+        """Remove a Task object from the collection.
+
+        This module will search for task in collection and remove and
+        return True. If the task is not found, it will return False.
+
+        Args:
+            task (Task object): The Task object to be deleted from the
+            collection
+        """
+        task_list = self.tasks.get(task.due_date, default=[])
+        try:
+            i = task_list.index(task)
+        except ValueError:
+            return False
+        del task_list[i]
+        return True
+
 
     def update(self):
         pass
@@ -85,7 +101,9 @@ class Task(object):
         # Optional elements
         self.tags = [user]
         if tag is not None:
-            [self.tags.append(item) for item in tag]
+            for item in tag:
+                if item is not '':
+                    self.tags.append(item)
 
         # Generated elements
         self.entry_time = datetime.datetime.today()
@@ -116,7 +134,7 @@ class Task(object):
     def setdue_date(self, value):
         """due_date in mm-dd-year format and it cannot be before today.
         """
-        if value is not None:
+        if value not in (None, ''):
             month, day, year = (int(i) for i in value.split('-'))
             self._due_date = datetime.date(year, month, day)
             if self._due_date < datetime.date.today():
