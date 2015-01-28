@@ -22,7 +22,7 @@ class Collection(object):
     def get_due_dates(self):
         """Returns a sorted list of due dates in the collection."""
 
-        # None cannot be compared datetime.date
+        # None cannot be compared to datetime.date
         if None in self._tasks:
             sorted_keys = [None] + sorted(
                 [i for i in self._tasks.iterkeys() if i != None])
@@ -57,7 +57,7 @@ class Collection(object):
             task (Task object): The Task object to be deleted from the
             collection
         """
-        task_list = self._tasks.get(task.due_date, default=[])
+        task_list = self._tasks.get(task.due_date, [])
         try:
             i = task_list.index(task)
         except ValueError:
@@ -112,11 +112,11 @@ class Task(object):
         self.tags = [user]
         if tag is not None:
             for item in tag:
-                if item is not '':
+                if item not in (None, ''):
                     self.tags.append(item)
 
         # Generated elements
-        self.entry_time = datetime.datetime.today()
+        self.entry_time = datetime.datetime.now()
         self.id = 0 # TODO - Hash to match cloud storage?
         self.creator = user
         self.done = False
@@ -164,24 +164,30 @@ class Task(object):
         s += "Created By: {0} {1}\nDone?: {2}\nMarked Done By: {3} {4}".format(
             self.creator, self.entry_time, self.done,
             self.done_user, self.done_date)
-        return s    
+        return s
+
+    def mark_done(self, user):
+        """Mark task as finished."""
+        self.done = True
+        self.done_date = datetime.datetime.now()
+        self.done_user = user
 
 
 class Storage(object):
     def __init__(self):
         pass
 
-    def save(self, collection_list):
-        # TODO: save collections in collection_list to file
+    def save(self, collection):
+        # TODO: save collections to file
         pass
 
-    def load(self, user):
+    def load(self):
         # TODO: load collections from file
         # TEMP - load collection with one temp task
-        new_task = Task(user, "This is a temporary task with no due date.")
+        new_task = Task('joshf', "This is a temporary task with no due date.")
         new_collection = Collection("temp collection")
         new_collection.add(new_task)
-        return new_collection
+        return [new_collection,]
 
     def read(self):
         # TODO: static or class methods?
