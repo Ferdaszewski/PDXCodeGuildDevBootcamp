@@ -3,6 +3,8 @@
 Joshua Ferdaszewski
 ferdaszewski@gmail.com
 """
+# TODO: comment code and write all docstrings
+# TODO: verify pep8 compliance
 import collections
 import datetime
 import json
@@ -12,6 +14,7 @@ import pickle
 # Program constants
 LOCAL_FILE = './dotolist.dat'
 
+
 class Collection(object):
     def __init__(self, collection_name):
         """A collection of Task objects.
@@ -20,12 +23,15 @@ class Collection(object):
             collection_name (str): The name of this collection
 
         Paramaters:
-            _tasks (dict, private): A dictionary with datetime.date
-                objects as keys and a list of Task objects as values.
-            collection_name (str): The name of this collection
+            _tasks (dict, private): A default dictionary with
+                datetime.date objects as keys and a list of Task objects as
+                values.
+            _archive_tasks (list, private): A list of tasks that have
+                been marked done.
+            collection_name (str): The name of this collection.
         """
-        # TODO: create archive for done tasks, refactor methods
         self._tasks = collections.defaultdict(list)
+        self._archive_tasks = []
         self.name = collection_name
 
     def get_due_dates(self):
@@ -74,13 +80,27 @@ class Collection(object):
         del task_list[i]
         return True
 
+    def archive(self):
+        """Moves any task object marked as done in tasks to the _archive_tasks
+        list.
+        """
+        for date in self.get_due_dates():            
+            # Add done tasks to archive list
+            done_tasks = [task for task in self._tasks[date]
+                if task.done == True]
+            self._archive_tasks.extend(done_tasks)
+
+            # Remove done_tasks from task_list
+            self._tasks[date] = [task for task in self._tasks[date]
+                if task not in done_tasks]
+
     def json_serialize(self):
         # TODO: Serialize to a JSON string and return it.
-        pass
+        self.archive()
 
     def json_desearilze(self, json_data):
         # TODO: De-serialize JSON data, instantiate collection, add tasks and return
-        pass
+        self.archive()
 
 
 class Task(object):
@@ -138,6 +158,7 @@ class Task(object):
         self._tags = [user]
         self.settags(tag_list)
 
+    # Properties of tag attribute
     def gettags(self):
         return self._tags
     def settags(self, tag_list):
@@ -153,6 +174,7 @@ class Task(object):
         self._tags = [self.creator]
     tags = property(gettags, settags, deltags)
 
+    # Properties of entry attribute
     def getentry(self):
         return self._entry
     def setentry(self, value):
@@ -163,6 +185,7 @@ class Task(object):
         self._entry = ""
     entry = property(getentry, setentry, delentry)
 
+    # Properties of due_date attribute
     def getdue_date(self):
         return self._due_date
     def setdue_date(self, value):
@@ -180,6 +203,7 @@ class Task(object):
     due_date = property(getdue_date, setdue_date, deldue_date)
 
     def __str__(self):
+        """String representation of all task attributes."""
         s = "ID: " + str(self.id)
         s += "\nTask: {0}\nDue Date: {1}\nTags: {2}\n".format(self._entry,
             self._due_date, self.tags)
@@ -215,11 +239,15 @@ class LocalStorage(object):
         """Load list of collections from file."""
         if os.path.isfile(LOCAL_FILE):
             with open(LOCAL_FILE, 'r') as f:
-                return pickle.load(f)
+                collections = pickle.load(f)
         else:
             print "Cannot find file:", LOCAL_FILE
             raw_input("Loading empty collection.")
-            return [Collection("My List")]
+            collections = [Collection("My List")]
+        
+        # Clean collection of all done tasks and move to archive
+        for collection in collections:
+            collection.archive()
         return collections
 
 
@@ -230,3 +258,11 @@ class CloudStorage(object):
         """Saves a list of collections to the cloud."""
         # TODO: Serialize collections to JSON
         # TODO: Write JSON data to cloud
+        pass
+
+    def load(self):
+        """Load list of collections from the cloud."""
+        # TODO: read JSON data from cloud
+        # TODO: deserialize JSON data and load collections
+        # TODO: return list of collections
+        pass

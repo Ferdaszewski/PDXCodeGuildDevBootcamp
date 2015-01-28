@@ -6,6 +6,8 @@ Main control structure.
 Joshua Ferdaszewski
 ferdaszewski@gmail.com
 """
+# TODO: comment code and write all docstrings
+# TODO: verify pep8 compliance
 import datetime
 import sys
 
@@ -14,8 +16,7 @@ import doto
 
 class DoToApp(object):
     def __init__(self):
-        # TODO Storage selector, local or cloud
-        self.storage = doto.LocalStorage()
+        self.storage = None
         self.user = None
     
     def clear_screen(self,):
@@ -33,10 +34,18 @@ class DoToApp(object):
         self.clear_screen()
         print "Welcome to Do To! What is your name?"
         self.user = raw_input("> ")
+
+        # Set local or cloud storage
+        print "\nDefault file storage is local. Use cloud storage?"
+        cloud = raw_input("'cloud': Cloud Storage. Otherwise press enter. > ")
+        if cloud.strip().lower() in ('y', 'cloud'):
+            self.storage = doto.CloudStorage()
+        else:
+            self.storage = doto.LocalStorage()
+
+        # Load list of collections and set current to the default
         self.master_collection = self.storage.load()
         self.current_collection = self.master_collection[0]
-
-        # TODO: if this is a new user, prompt create a new user?
         self.main()
 
     def display(self, tag_filter=None):
@@ -47,7 +56,6 @@ class DoToApp(object):
             tag_filter (list): A list of tags (str) to filter the tasks
             by. if None, print out all tasks.
         """
-        # TODO: Deal with done tasks (archived in collection)
         print "\t\t" + self.current_collection.name
         if tag_filter not in (None, []):
             print "Filter:", tag_filter
@@ -152,6 +160,7 @@ class DoToApp(object):
                         "Enter command for selected task > ").strip().lower()
                     if selection == 'd':
                         sel_task.mark_done(self.user)
+                        self.current_collection.archive()
                         break
                     if selection == 't':
                         user_input = raw_input(
