@@ -94,6 +94,11 @@ class Collection(object):
             self._tasks[date] = [task for task in self._tasks[date]
                 if task not in done_tasks]
 
+    def getarchive(self):
+        """Returns a list of tasks that have been marked done."""
+        self.archive()
+        return self._archive_tasks
+
     def json_serialize(self):
         # TODO: Serialize to a JSON string and return it.
         self.archive()
@@ -264,5 +269,6 @@ class CloudStorage(object):
         """Load list of collections from the cloud."""
         # TODO: read JSON data from cloud
         # TODO: deserialize JSON data and load collections
+        # TODO: clean collections of all done tasks
         # TODO: return list of collections
         pass

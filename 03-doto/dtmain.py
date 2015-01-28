@@ -244,7 +244,13 @@ class DoToApp(object):
                     "Enter tag(s) to display (comma separated). > ")
                 tag_filter = [tag.strip() for tag in user_input.split(',')
                     if tag is not '']
-
+            elif command in ('a', 'archive'):
+                self.clear_screen()
+                print "%s - Archive" % self.current_collection.name
+                archive = self.current_collection.getarchive()
+                for task in archive:
+                    print "\n%s" % task
+                raw_input("Press Enter to continue.")
             elif command == '?':
                 self.clear_screen()
                 print "\nList of Commands"
@@ -254,9 +260,10 @@ class DoToApp(object):
                 print "'e' or 'select': Select a task and change or delete it."
                 print "'c' or 'change': Change collections or create one."
                 print "'f' or 'filter': Filter tasks by tags."
+                print "'a' or 'archive': Display finished tasks"
                 print "'q' or 'quit': Save current collections then quit"
                 print "'?': View this help again.\n"
-                raw_input("Press enter to return.")
+                raw_input("\nPress enter to return.")
 
             elif command in ('q', "quit"):
                 self.storage.save(self.master_collection)
