@@ -1,4 +1,7 @@
 """Module with classes for List DoTo application.
+
+Joshua Ferdaszewski
+ferdaszewski@gmail.com
 """
 import collections
 import datetime
@@ -21,6 +24,7 @@ class Collection(object):
                 objects as keys and a list of Task objects as values.
             collection_name (str): The name of this collection
         """
+        # TODO: create archive for done tasks, refactor methods
         self._tasks = collections.defaultdict(list)
         self.collection_name = collection_name
 
@@ -69,6 +73,14 @@ class Collection(object):
             return False
         del task_list[i]
         return True
+
+    def json_serialize(self):
+        # TODO: Serialize to a JSON string and return it.
+        pass
+
+    def json_desearilze(self, json_data):
+        # TODO: De-serialize JSON data, instantiate collection, add tasks and return
+        pass
 
 
 class Task(object):
@@ -182,6 +194,14 @@ class Task(object):
         self.done_date = datetime.datetime.now()
         self.done_user = user
 
+    def json_serialize(self):
+        # TODO: Serialize to a JSON string and return it.
+        pass
+
+    def json_desearilze(self, json_data):
+        # TODO: De-serialize JSON data, instantiate task object and return
+        pass
+
 
 class LocalStorage(object):
     """Local storage of collections using pickle."""
@@ -201,3 +221,12 @@ class LocalStorage(object):
             raw_input("Loading empty collection.")
             return [Collection("My List")]
         return collections
+
+
+class CloudStorage(object):
+    """Cloud storage of collections in JSON format."""
+
+    def save(self, collections):
+        """Saves a list of collections to the cloud."""
+        # TODO: Serialize collections to JSON
+        # TODO: Write JSON data to cloud

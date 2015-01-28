@@ -2,9 +2,12 @@
 Small program to manage a to do list.
 
 Main control structure.
+
+Joshua Ferdaszewski
+ferdaszewski@gmail.com
 """
-import sys
 import datetime
+import sys
 
 import doto
 
@@ -45,6 +48,7 @@ class DoToApp(object):
             tag_filter (list): A list of tags (str) to filter the tasks
             by. if None, print out all tasks.
         """
+        # TODO: Deal with done tasks (archived in collection)
         print "\t\t" + self.current_collection.collection_name
         if tag_filter not in (None, []):
             print "Filter:", tag_filter
