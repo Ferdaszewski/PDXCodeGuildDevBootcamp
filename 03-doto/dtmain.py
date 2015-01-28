@@ -1,4 +1,6 @@
-"""Do To application.
+"""List Do To
+Small program to manage a to do list.
+
 Main control structure.
 """
 import sys
@@ -9,7 +11,8 @@ import doto
 
 class DoToApp(object):
     def __init__(self):
-        self.storage = doto.Storage()
+        # TODO Storage selector, local or cloud
+        self.storage = doto.LocalStorage()
         self.user = None
     
     def clear_screen(self,):
@@ -73,16 +76,19 @@ class DoToApp(object):
         """Searches for and returns task, if error, returns false"""
         date_input = raw_input("Enter Due Date of task mm-dd-year > ")
         try:
-            month, day, year = (int(i) for i in date_input.split('-'))
-            date = datetime.date(year, month, day)
+            if date_input.strip() != '':
+                month, day, year = (int(i) for i in date_input.split('-'))
+                date = datetime.date(year, month, day)
+            else:
+                date = None
             task_list = self.current_collection.get_task_list(date)
-            self.clear_screen()
-            for i, task in enumerate(task_list):
-                print "Task ID: {0}".format(i)
-                self.display_task(task)
         except (ValueError, IndexError) as e:
             print raw_input("Error. Not a valid date: %s\nPress Enter" % e)
             return False
+        self.clear_screen()
+        for i, task in enumerate(task_list):
+            print "Task ID: {0}".format(i)
+            self.display_task(task)
         index_input = raw_input("Enter task ID. > ")
         try:
             index = int(index_input)
@@ -104,9 +110,11 @@ class DoToApp(object):
                 "Enter command (? for help) > ").strip().lower()
             if command in ('s', 'save'):
                 self.storage.save(self.master_collection)
+                raw_input("Tasks Saved\nPress Enter to continue.")
             elif command in ('l', 'load'):
-                self.master_collection = self.storage.load(self.user)
+                self.master_collection = self.storage.load()
                 self.current_collection = self.master_collection[0]
+                raw_input("Tasks Loaded\nPress Enter to continue.")
             elif command in ('n', 'new'):
                 self.clear_screen()
                 print "Create a new task."
@@ -143,8 +151,16 @@ class DoToApp(object):
                         sel_task.mark_done(self.user)
                         break
                     if sellection == 't':
-                        #TODO change tags for task
-                        pass
+                        user_input = raw_input(
+                            "Overwrite existing tags? y/n > "
+                            ).strip().lower()
+                        if user_input in ('y', 'yes'):
+                            del sel_task.tags                        
+                        user_tags = raw_input(
+                            "Enter new tags (comma separated) (optional). > ")
+                        sel_task.tags = [
+                            tag.strip() for tag in user_tags.split(',')]
+                        break
                     if sellection == 'x':
                         if raw_input("Delete this task? y/n > ") in ('y', 'Y'):
                             delete = self.current_collection.delete(sel_task)
@@ -182,7 +198,7 @@ class DoToApp(object):
                 raw_input("Press enter to return.")
 
             elif command in ('q', "quit"):
-                # TODO: write current collection to file.
+                self.storage.save(self.master_collection)
                 return
             else:
                 self.clear_screen()

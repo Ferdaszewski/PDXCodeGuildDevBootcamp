@@ -1,8 +1,13 @@
 """Module with classes for List DoTo application.
 """
-import datetime
 import collections
+import datetime
+import json
+import os
+import pickle
 
+# Program constants
+LOCAL_FILE = './dotolist.dat'
 
 class Collection(object):
     def __init__(self, collection_name):
@@ -12,8 +17,8 @@ class Collection(object):
             collection_name (str): The name of this collection
 
         Paramaters:
-            _tasks (dict, private): A dictionary with datetime.date objects as
-                keys and a list of Task objects as values.
+            _tasks (dict, private): A dictionary with datetime.date
+                objects as keys and a list of Task objects as values.
             collection_name (str): The name of this collection
         """
         self._tasks = collections.defaultdict(list)
@@ -67,12 +72,12 @@ class Collection(object):
 
 
 class Task(object):
-    def __init__(self, user, description, date_due=None, tag=None):
+    def __init__(self, user, description, date_due=None, tag_list=None):
         """Create a new task.
 
         Paramaters:
-            _entry (str, internal): The body of the task. Will be 0 to 140
-                characters, inclusive. Accessed publicly as entry.
+            _entry (str, internal): The body of the task. Will be 0 to
+                140 characters, inclusive. Accessed publicly as entry.
             entry (str, public): Supports get, set, and del. If the
                 string is over 140 characters it will raise and
                 a ValueError.
@@ -81,8 +86,9 @@ class Task(object):
             due_date (datetime.date or None, public): Supports get, set,
                 and del. Will raise an exception if date is not formated
                 correctly (mm-dd-year) or is after the date of entry.
-            tag (set): A set of strings to orgonize and catagorize the
-                task. the user that created the task will be tagged.
+            _tags (list, private): A set of strings to orgonize and
+                catagorize the task. the user that created the task will
+                be tagged.
             entry_time (datetime.datetime): Timestamp when created
             id (??): A hash of...???
             creator (str): Name of user that created the task.
@@ -96,25 +102,12 @@ class Task(object):
             description (str): Body of the task, limited to 140 chars.
             due_date (str, optional): Due date for task in "mm-dd-year"
                 format, or None if there is not due date for the task.
-            tag (list of str, optional): List of tags to add to task.
+            tag_list (list, optional): List of tags (str) to add to task.
                 The user is always a tag on a new task.
 
         Methods:
 
         """
-        # Required elements
-        self._entry = None
-        self.setentry(description)
-        self._due_date = None
-        self.setdue_date(date_due)
-
-        # Optional elements
-        self.tags = [user]
-        if tag is not None:
-            for item in tag:
-                if item not in (None, ''):
-                    self.tags.append(item)
-
         # Generated elements
         self.entry_time = datetime.datetime.now()
         self.id = 0 # TODO - Hash to match cloud storage?
@@ -123,24 +116,43 @@ class Task(object):
         self.done_date = None
         self.done_user= None
 
-    
+        # Required elements
+        self._entry = None
+        self.setentry(description)
+        self._due_date = None
+        self.setdue_date(date_due)
+
+        # Optional element
+        self._tags = [user]
+        self.settags(tag_list)
+
+    def gettags(self):
+        return self._tags
+    def settags(self, tag_list):
+        if tag_list is not None:
+            for item in tag_list:
+                if item not in (None, ''):
+                    self._tags.append(item)
+        # Creator of task must always be a tag
+        if self.creator not in self._tags:
+            self._tags.append(self.creator)
+    def deltags(self):
+        # Creator of a task must always be a tag
+        self._tags = [self.creator]
+    tags = property(gettags, settags, deltags)
+
     def getentry(self):
         return self._entry
-
     def setentry(self, value):
         if len(value) > 140:
             raise ValueError("Task entry cannot be more than 140 characters")
         self._entry = value
-
     def delentry(self):
         self._entry = ""
-
     entry = property(getentry, setentry, delentry)
-
 
     def getdue_date(self):
         return self._due_date
-
     def setdue_date(self, value):
         """due_date in mm-dd-year format and it cannot be before today.
         """
@@ -151,10 +163,8 @@ class Task(object):
                 raise ValueError("Due date cannot be before today")
         else:
             self._due_date = None
-
     def deldue_date(self):
         self._due_date = None
-
     due_date = property(getdue_date, setdue_date, deldue_date)
 
     def __str__(self):
@@ -173,26 +183,21 @@ class Task(object):
         self.done_user = user
 
 
-class Storage(object):
-    def __init__(self):
-        pass
-
-    def save(self, collection):
-        # TODO: save collections to file
-        pass
+class LocalStorage(object):
+    """Local storage of collections using pickle."""
+    
+    def save(self, collections):
+        """Saves a list of collections to file."""
+        with open(LOCAL_FILE, 'w') as f:
+            pickle.dump(collections, f)
 
     def load(self):
-        # TODO: load collections from file
-        # TEMP - load collection with one temp task
-        new_task = Task('joshf', "This is a temporary task with no due date.")
-        new_collection = Collection("temp collection")
-        new_collection.add(new_task)
-        return [new_collection,]
-
-    def read(self):
-        # TODO: static or class methods?
-        pass
-
-    def write(self):
-        # TODO: static or class methods?
-        pass
+        """Load list of collections from file."""
+        if os.path.isfile(LOCAL_FILE):
+            with open(LOCAL_FILE, 'r') as f:
+                return pickle.load(f)
+        else:
+            print "Cannot find file:", LOCAL_FILE
+            raw_input("Loading empty collection.")
+            return [Collection("My List")]
+        return collections
