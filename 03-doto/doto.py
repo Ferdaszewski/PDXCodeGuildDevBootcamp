@@ -6,21 +6,38 @@ import collections
 
 class Collection(object):
     def __init__(self, collection_name):
-        # tasks is a dict with due_date of task as key, then list of
-        # tasks organized by entry_time
-        self.tasks = collections.defaultdict(list)
+        """A collection of Task objects.
+
+        Args:
+            collection_name (str): The name of this collection
+
+        Paramaters:
+            _tasks (dict, private): A dictionary with datetime.date objects as
+                keys and a list of Task objects as values.
+            collection_name (str): The name of this collection
+        """
+        self._tasks = collections.defaultdict(list)
         self.collection_name = collection_name
 
-    def display(self, filter_var):
-        print "\t\t" + self.collection_name
-        for date, task_list in self.tasks.items():
-            print "\nDue Date:", date
-            for task in task_list:
-                checked = " "
-                if task.done is True:
-                    checked = "X"
-                print "[{0}] {1}\n*Tags* | {2} |".format(checked, task._entry,
-                    ' | '.join(task.tags))
+    def get_due_dates(self):
+        """Returns a sorted list of due dates in the collection."""
+
+        # None cannot be compared datetime.date
+        if None in self._tasks:
+            sorted_keys = [None] + sorted(
+                [i for i in self._tasks.iterkeys() if i != None])
+        else:
+            sorted_keys = sorted(self._tasks.keys())
+        return sorted_keys
+
+    def get_task_list(self, due_date):
+        """Returns a list of tasks for a specific due date. If date is
+        not in collection, passes down the error.
+
+        Args:
+            due_date (datetime.date): Takes a datetime.date object
+        """
+        return self._tasks[due_date]
 
     def add(self, new_task):
         """Add a task to this collection.
@@ -28,7 +45,7 @@ class Collection(object):
         Args:
         new_task (a Task object): A Task object to add to collection
         """
-        self.tasks[new_task.due_date].append(new_task)
+        self._tasks[new_task.due_date].append(new_task)
 
     def delete(self, task):
         """Remove a Task object from the collection.
@@ -40,20 +57,13 @@ class Collection(object):
             task (Task object): The Task object to be deleted from the
             collection
         """
-        task_list = self.tasks.get(task.due_date, default=[])
+        task_list = self._tasks.get(task.due_date, default=[])
         try:
             i = task_list.index(task)
         except ValueError:
             return False
         del task_list[i]
         return True
-
-
-    def update(self):
-        pass
-
-    def find(self):
-        pass
 
 
 class Task(object):
@@ -157,7 +167,6 @@ class Task(object):
         return s    
 
 
-
 class Storage(object):
     def __init__(self):
         pass
@@ -175,9 +184,9 @@ class Storage(object):
         return new_collection
 
     def read(self):
-        # static or class methods?
+        # TODO: static or class methods?
         pass
 
     def write(self):
-        # static or class methods?
+        # TODO: static or class methods?
         pass
