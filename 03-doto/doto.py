@@ -26,7 +26,7 @@ class Collection(object):
         """
         # TODO: create archive for done tasks, refactor methods
         self._tasks = collections.defaultdict(list)
-        self.collection_name = collection_name
+        self.name = collection_name
 
     def get_due_dates(self):
         """Returns a sorted list of due dates in the collection."""

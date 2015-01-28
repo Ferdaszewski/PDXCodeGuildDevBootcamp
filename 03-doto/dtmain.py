@@ -37,7 +37,6 @@ class DoToApp(object):
         self.current_collection = self.master_collection[0]
 
         # TODO: if this is a new user, prompt create a new user?
-        # TODO: User class needed?
         self.main()
 
     def display(self, tag_filter=None):
@@ -49,7 +48,7 @@ class DoToApp(object):
             by. if None, print out all tasks.
         """
         # TODO: Deal with done tasks (archived in collection)
-        print "\t\t" + self.current_collection.collection_name
+        print "\t\t" + self.current_collection.name
         if tag_filter not in (None, []):
             print "Filter:", tag_filter
         for date in self.current_collection.get_due_dates():
@@ -147,14 +146,14 @@ class DoToApp(object):
                 print "'t': Change tags of this task"
                 print "'x': Remove this task permanently (cannot be undone)"
                 print "'c': Cancel and return to main menu."
-                sellection = None
-                while sellection != 'c':
-                    sellection = raw_input(
+                selection = None
+                while selection != 'c':
+                    selection = raw_input(
                         "Enter command for selected task > ").strip().lower()
-                    if sellection == 'd':
+                    if selection == 'd':
                         sel_task.mark_done(self.user)
                         break
-                    if sellection == 't':
+                    if selection == 't':
                         user_input = raw_input(
                             "Overwrite existing tags? y/n > "
                             ).strip().lower()
@@ -165,7 +164,7 @@ class DoToApp(object):
                         sel_task.tags = [
                             tag.strip() for tag in user_tags.split(',')]
                         break
-                    if sellection == 'x':
+                    if selection == 'x':
                         if raw_input("Delete this task? y/n > ") in ('y', 'Y'):
                             delete = self.current_collection.delete(sel_task)
                             if delete:
@@ -177,11 +176,60 @@ class DoToApp(object):
                     else:
                         print "Please enter valid command."
             elif command in ('c', 'change'):
-                # TODO: print collection names with index next to them
-                # TODO: Get index of collection that user wants to switch to or create new collection
-                # TODO: Write current collection to file then open new collection
-                index = 0
-                self.current_collection = self.master_collection[index]
+                # Print out all collections with index numbers
+                self.clear_screen()
+                print "**Collections**\n"
+                for i, collection in enumerate(self.master_collection):
+                    print "Collection ID: %d | %s" % (i, collection.name)
+                print ""
+                
+                # Select collection and validate
+                selection = raw_input(
+                    "Enter Collection ID or 'new' for a new collection. > ")
+                if selection.strip().lower() == 'new':
+                    collection_name = raw_input("Name for new collection. > ")
+                    self.master_collection.append(
+                        doto.Collection(collection_name))
+                    self.current_collection = self.master_collection[-1]
+                    continue
+                try:
+                    index = int(selection)
+                    self.current_collection = self.master_collection[index]
+                except (ValueError, IndexError) as e:
+                    raw_input("Invalid selection: %s\nPress Enter." % e)
+                    continue
+
+                # With selected collection, offer options
+                print "'r': Rename collection"
+                print "'x': Delete collection (cannot be undone)"
+                print "'v': View current collection tasks"
+                selection = ''
+                while selection != 'v':
+                    selection = raw_input("Enter command. > ")
+                    selection = selection.strip().lower()
+                    
+                    # Rename collection and set to current collection
+                    if selection == 'r':
+                        new_name = raw_input("Enter new collection name. > ")
+                        self.current_collection.name = new_name
+                        break
+
+                    # Delete collection and set current to default
+                    elif selection =='x':
+
+                        # There must be at least one collection
+                        if len(self.master_collection) <= 1:
+                            print "One collection remaining, cannot delete.",
+                            print "Create new collection first."
+                            raw_input("Press Enter to continue.")
+                            break
+                        delete = raw_input("Delete this collection? y/n > ")
+                        if delete.strip().lower() in ('y', 'yes'):
+                            del self.master_collection[index]
+                            self.current_collection = self.master_collection[0]
+                            break
+                    else:
+                        print "Invalid command. Try again."
             elif command in ('f', 'filter'):
                 user_input = raw_input(
                     "Enter tag(s) to display (comma separated). > ")
