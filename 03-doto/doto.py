@@ -8,6 +8,7 @@ ferdaszewski@gmail.com
 import collections
 import datetime
 import json
+import jsonpickle
 import os
 import pickle
 
@@ -81,8 +82,8 @@ class Collection(object):
         return True
 
     def archive(self):
-        """Moves any task object marked as done in tasks to the _archive_tasks
-        list.
+        """Moves any task object marked as done in tasks to the
+        _archive_tasks list.
         """
         for date in self.get_due_dates():            
             # Add done tasks to archive list
@@ -102,6 +103,7 @@ class Collection(object):
     def json_serialize(self):
         # TODO: Serialize to a JSON string and return it.
         self.archive()
+
 
     def json_desearilze(self, json_data):
         # TODO: De-serialize JSON data, instantiate collection, add tasks and return
@@ -126,6 +128,7 @@ class Task(object):
             _tags (list, private): A set of strings to orgonize and
                 catagorize the task. the user that created the task will
                 be tagged.
+            tags (list, public): Supports get, set and del.
             entry_time (datetime.datetime): Timestamp when created
             id (??): A hash of...???
             creator (str): Name of user that created the task.
@@ -137,7 +140,7 @@ class Task(object):
         Args:
             user (str): Name of application user and owner of the task.
             description (str): Body of the task, limited to 140 chars.
-            due_date (str, optional): Due date for task in "mm-dd-year"
+            due_date (str, optional): Due date for task in "year-mm-dd"
                 format, or None if there is not due date for the task.
             tag_list (list, optional): List of tags (str) to add to task.
                 The user is always a tag on a new task.
@@ -151,7 +154,7 @@ class Task(object):
         self.creator = user
         self.done = False
         self.done_date = None
-        self.done_user= None
+        self.done_user = None
 
         # Required elements
         self._entry = None
@@ -194,10 +197,10 @@ class Task(object):
     def getdue_date(self):
         return self._due_date
     def setdue_date(self, value):
-        """due_date in mm-dd-year format and it cannot be before today.
+        """due_date in year-mm-dd format and it cannot be before today.
         """
         if value not in (None, ''):
-            month, day, year = (int(i) for i in value.split('-'))
+            year, month, day = (int(i) for i in value.split('-'))
             self._due_date = datetime.date(year, month, day)
             if self._due_date < datetime.date.today():
                 raise ValueError("Due date cannot be before today")
@@ -225,7 +228,28 @@ class Task(object):
 
     def json_serialize(self):
         # TODO: Serialize to a JSON string and return it.
-        pass
+        task_dict = {}
+        task_dict['entry_time'] = self.entry_time
+
+
+
+
+        self.entry_time = datetime.datetime.now()
+        self.id = 0 # TODO - Hash to match cloud storage?
+        self.creator = user
+        self.done = False
+        self.done_date = None
+        self.done_user= None
+
+        # Required elements
+        self._entry = None
+        self.setentry(description)
+        self._due_date = None
+        self.setdue_date(date_due)
+
+        # Optional element
+        self._tags = [user]
+        self.settags(tag_list)
 
     def json_desearilze(self, json_data):
         # TODO: De-serialize JSON data, instantiate task object and return
@@ -263,7 +287,9 @@ class CloudStorage(object):
         """Saves a list of collections to the cloud."""
         # TODO: Serialize collections to JSON
         # TODO: Write JSON data to cloud
-        pass
+        jpick = jsonpickle.encode(collections)
+        with open("./tempjp.json", 'w') as f:
+            f.write(jpick)
 
     def load(self):
         """Load list of collections from the cloud."""
@@ -271,4 +297,15 @@ class CloudStorage(object):
         # TODO: deserialize JSON data and load collections
         # TODO: clean collections of all done tasks
         # TODO: return list of collections
-        pass
+        if os.path.isfile("./tempjp.json"):
+            with open("./tempjp.json", 'r') as f:
+                collections = jsonpickle.decode(f.read())
+        else:
+            print "Cannot find file:", "./tempjp.json"
+            raw_input("Loading empty collection.")
+            collections = [Collection("My List")]
+        
+        # Clean collection of all done tasks and move to archive
+        for collection in collections:
+            collection.archive()
+        return collections

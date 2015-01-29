@@ -85,10 +85,10 @@ class DoToApp(object):
 
     def find_task(self):
         """Searches for and returns task, if error, returns false"""
-        date_input = raw_input("Enter Due Date of task mm-dd-year > ")
+        date_input = raw_input("Enter Due Date of task year-mm-dd > ")
         try:
             if date_input.strip() != '':
-                month, day, year = (int(i) for i in date_input.split('-'))
+                year, month, day = (int(i) for i in date_input.split('-'))
                 date = datetime.date(year, month, day)
             else:
                 date = None
@@ -132,7 +132,7 @@ class DoToApp(object):
                 description = raw_input(
                     "Enter task (140 characters max) > ")
                 due_date = raw_input(
-                    "Enter due date as 'mm-dd-year' (optional). > ")
+                    "Enter due date as 'year-mm-dd' (optional). > ")
                 tags = raw_input(
                     "Enter tags for the task (comma separated) (optional). > ")
                 tag_list = [tag.strip() for tag in tags.split(',')]
