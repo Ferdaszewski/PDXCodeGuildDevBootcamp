@@ -273,7 +273,6 @@ class DoToApp(object):
                 raw_input("\nPress enter to return.")
 
             elif command in ('q', "quit"):
-                self.storage.save(self.master_collection)
                 return
             else:
                 self.clear_screen()

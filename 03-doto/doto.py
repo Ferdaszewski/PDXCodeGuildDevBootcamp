@@ -193,7 +193,7 @@ class Task(object):
         """
         # Generated elements
         self.entry_time = datetime.datetime.now()
-        self.task_id = 0 # TODO - task_id to match cloud storage?
+        self.task_id = 0  # TODO - task_id to match cloud storage?
         self.creator = user
         self.done = False
         self.done_date = None
@@ -357,8 +357,8 @@ class CloudStorage(object):
         id_list = []
         for collection in collections:
             coll_dict = {}
-            coll_dict['jp_collection'] = jsonpickle.encode(
-                collection, keys=True, )
+            coll_dict['jp_collection'] = jsonpickle.encode(collection,
+                keys=True)
             
             new_id = self._dbcollection.save(coll_dict)
             
