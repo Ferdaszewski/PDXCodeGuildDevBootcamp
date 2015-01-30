@@ -10,7 +10,7 @@ ferdaszewski@gmail.com
 # TODO: verify pep8 compliance
 # TODO: assignment of tasks with @username - new task attribute?
 # TODO: load assigned tasks to cloud, pull my assigned tasks to collection
-# TODO: delete collection from cloud when deleted from master list
+# TODO: delete collection from cloud when deleted from master list - load as option not manditory
 import datetime
 import sys
 

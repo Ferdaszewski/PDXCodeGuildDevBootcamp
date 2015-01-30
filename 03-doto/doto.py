@@ -353,8 +353,8 @@ class CloudStorage(object):
 
     def save(self, collections):
         """Saves a list of collections to the cloud."""
-        
         # Serialize collections and tasks and save to cloud
+        id_list = []
         for collection in collections:
             coll_dict = {}
             coll_dict['jp_collection'] = jsonpickle.encode(collection.serialize())
@@ -362,13 +362,18 @@ class CloudStorage(object):
             # Add _id if it exists
             if collection.db_id not in (None, ''):
                 coll_dict['_id'] = ObjectId(collection.db_id)
-            
+                id_list.append(coll_dict['_id'])
             self._dbcollection.save(coll_dict)
 
+        # Delete documents that are in cloud but not in local
+        to_del = [doc_id for doc_id in
+            self._dbcollection.find(fields=['_id']) if doc_id not in id_list]
+        if len(to_del) > 0:
+            for doc_id in to_del:
+                self._dbcollection.remove(doc_id)
 
     def load(self):
-        """Load list of collections from the cloud."""
-        
+        """Load list of collections from the cloud."""        
         # Get each document and place in collections list
         collections = []
         for doc in self._dbcollection.find():
