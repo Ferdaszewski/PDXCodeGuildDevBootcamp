@@ -325,25 +325,25 @@ class Task(object):
 class LocalStorage(object):
     """Local storage of collections using pickle."""
 
-    def save(self, collections):
+    def save(self, coll_to_save):
         """Saves a list of collections to file."""
         with open(LOCAL_FILE, 'w') as f:
-            pickle.dump(collections, f)
+            pickle.dump(coll_to_save, f)
 
     def load(self):
         """Load list of collections from file."""
         if os.path.isfile(LOCAL_FILE):
             with open(LOCAL_FILE, 'r') as f:
-                collections = pickle.load(f)
+                loaded_colls = pickle.load(f)
         else:
             print "Cannot find file:", LOCAL_FILE
             raw_input("Loading empty collection.")
-            collections = [Collection("My List")]
+            loaded_colls = [Collection("My List")]
 
         # Clean collection of all done tasks and move to archive
-        for collection in collections:
+        for collection in loaded_colls:
             collection.archive()
-        return collections
+        return loaded_colls
 
 
 class CloudStorage(object):
@@ -352,11 +352,11 @@ class CloudStorage(object):
         # Connect to the database and collection
         self._dbcollection = pymongo.MongoClient(MONGOHQ_URL).qscfadm.josh
 
-    def save(self, collections):
+    def save(self, coll_to_save):
         """Saves a list of collections to the cloud."""
         # Serialize collections
         id_list = []
-        for collection in collections:
+        for collection in coll_to_save:
             coll_dict = {}
             coll_dict['jp_collection'] = jsonpickle.encode(collection,
                                                            keys=True)
@@ -383,7 +383,7 @@ class CloudStorage(object):
     def load(self):
         """Load list of collections from the cloud."""
         # Get each document and place in collections list
-        collections = []
+        loaded_colls = []
         for doc in self._dbcollection.find():
 
             # decode and deserialize data
@@ -391,8 +391,8 @@ class CloudStorage(object):
 
             # Add database id to collection object
             collection.db_id = doc['_id']
-            collections.append(collection)
-        if len(collections) <= 0:
+            loaded_colls.append(collection)
+        if len(loaded_colls) <= 0:
             # Return empty collection
             return [Collection("My Collection")]
-        return collections
+        return loaded_colls
