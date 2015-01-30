@@ -15,9 +15,9 @@ import pickle
 import pymongo
 
 LOCAL_FILE = './dotolist.dat'
-MONGOHQ_URL = ("mongodb://codeguild:AsecretPassw00rd"
-             + "@dharma.mongohq.com:10023/qscfadm")
 
+# Login credentials for testing cloud database
+MONGOHQ_URL = os.environ["DOTO_MONGODB"]
 
 class Collection(object):
     def __init__(self, collection_name):
@@ -146,7 +146,7 @@ class Collection(object):
 
         # Deserialize archived tasks and assign to collection attribute
         new_collection._archive = [
-            task.deserialize() for task in data['archive']]
+            Task.deserialize(task) for task in data['archive']]
 
         new_collection.archive()
         return new_collection
@@ -353,22 +353,28 @@ class CloudStorage(object):
 
     def save(self, collections):
         """Saves a list of collections to the cloud."""
-        # Serialize collections and tasks and save to cloud
+        # Serialize collections
         id_list = []
         for collection in collections:
             coll_dict = {}
-            coll_dict['jp_collection'] = jsonpickle.encode(collection.serialize())
+            coll_dict['jp_collection'] = jsonpickle.encode(
+                collection, keys=True, )
+            
+            new_id = self._dbcollection.save(coll_dict)
             
             # Add _id if it exists
             if collection.db_id not in (None, ''):
                 coll_dict['_id'] = ObjectId(collection.db_id)
                 id_list.append(coll_dict['_id'])
-            self._dbcollection.save(coll_dict)
+            else:
+                # new entry in cloud, update id_list
+                id_list.append(new_id)
 
         # Delete documents that are in cloud but not in local
         to_del = [doc_id['_id'] for doc_id in
             self._dbcollection.find(fields=['_id'])
             if doc_id['_id'] not in id_list]
+
         if len(to_del) > 0:
             for doc_id in to_del:
                 self._dbcollection.remove({'_id': ObjectId(doc_id)})
@@ -380,8 +386,7 @@ class CloudStorage(object):
         for doc in self._dbcollection.find():
 
             # decode and deserialize data
-            json_data = jsonpickle.decode(doc['jp_collection'])
-            collection = Collection.deserialize(json_data)
+            collection = jsonpickle.decode(doc['jp_collection'], keys=True)
 
             # Add database id to collection object
             collection.db_id = doc['_id']
