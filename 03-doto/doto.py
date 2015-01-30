@@ -7,7 +7,6 @@ ferdaszewski@gmail.com
 # TODO: verify pep8 compliance
 import collections
 import datetime
-import json
 import jsonpickle
 import os
 from bson.objectid import ObjectId
@@ -45,7 +44,7 @@ class Collection(object):
         # None cannot be compared to datetime.date
         if None in self._tasks:
             sorted_keys = [None] + sorted(
-                [i for i in self._tasks.iterkeys() if i != None])
+                [i for i in self._tasks.iterkeys() if i is not None])
         else:
             sorted_keys = sorted(self._tasks.keys())
         return sorted_keys
@@ -89,15 +88,14 @@ class Collection(object):
         """Moves any task object marked as done in tasks to the
         _archive_tasks list.
         """
-        for date in self.get_due_dates():            
+        for date in self.get_due_dates():
             # Add done tasks to archive list
-            done_tasks = [task for task in self._tasks[date]
-                if task.done == True]
+            done_tasks = [task for task in self._tasks[date] if task.done]
             self._archive_tasks.extend(done_tasks)
 
             # Remove done_tasks from task_list
             self._tasks[date] = [task for task in self._tasks[date]
-                if task not in done_tasks]
+                                 if task not in done_tasks]
 
     def getarchive(self):
         """Returns a list of tasks that have been marked done."""
@@ -209,9 +207,9 @@ class Task(object):
         self._tags = [user]
         self.settags(tag_list)
 
-    # Properties of tag attribute
     def gettags(self):
         return self._tags
+
     def settags(self, tag_list):
         if tag_list is not None:
             for item in tag_list:
@@ -220,25 +218,27 @@ class Task(object):
         # Creator of task must always be a tag
         if self.creator not in self._tags:
             self._tags.append(self.creator)
+
     def deltags(self):
         # Creator of a task must always be a tag
         self._tags = [self.creator]
     tags = property(gettags, settags, deltags)
 
-    # Properties of entry attribute
     def getentry(self):
         return self._entry
+
     def setentry(self, value):
         if len(value) > 140:
             raise ValueError("Task entry cannot be more than 140 characters")
         self._entry = value
+
     def delentry(self):
         self._entry = ""
     entry = property(getentry, setentry, delentry)
 
-    # Properties of due_date attribute
     def getdue_date(self):
         return self._due_date
+
     def setdue_date(self, value):
         """due_date in year-mm-dd format and it cannot be before today.
         """
@@ -253,6 +253,7 @@ class Task(object):
                 raise ValueError("Due date cannot be before today")
         else:
             self._due_date = None
+
     def deldue_date(self):
         self._due_date = None
     due_date = property(getdue_date, setdue_date, deldue_date)
@@ -261,7 +262,7 @@ class Task(object):
         """String representation of all task attributes."""
         s = "task_id: " + str(self.task_id)
         s += "\nTask: {0}\nDue Date: {1}\nTags: {2}\n".format(self._entry,
-            self._due_date, self.tags)
+                                                self._due_date, self.tags)
         s += "Created By: {0} {1}\nDone?: {2}\nMarked Done By: {3} {4}".format(
             self.creator, self.entry_time, self.done,
             self.done_user, self.done_date)
@@ -301,7 +302,7 @@ class Task(object):
         new_done = data['done']
         new_done_date = data['done_date']
         new_done_user = data['done_user']
-        
+
         # External object attributes
         new_entry = data['entry']
         new_due_date = data['due_date']
@@ -323,7 +324,7 @@ class Task(object):
 
 class LocalStorage(object):
     """Local storage of collections using pickle."""
-    
+
     def save(self, collections):
         """Saves a list of collections to file."""
         with open(LOCAL_FILE, 'w') as f:
@@ -338,7 +339,7 @@ class LocalStorage(object):
             print "Cannot find file:", LOCAL_FILE
             raw_input("Loading empty collection.")
             collections = [Collection("My List")]
-        
+
         # Clean collection of all done tasks and move to archive
         for collection in collections:
             collection.archive()
@@ -358,10 +359,10 @@ class CloudStorage(object):
         for collection in collections:
             coll_dict = {}
             coll_dict['jp_collection'] = jsonpickle.encode(collection,
-                keys=True)
-            
+                                                           keys=True)
+
             new_id = self._dbcollection.save(coll_dict)
-            
+
             # Add _id if it exists
             if collection.db_id not in (None, ''):
                 coll_dict['_id'] = ObjectId(collection.db_id)
@@ -372,15 +373,15 @@ class CloudStorage(object):
 
         # Delete documents that are in cloud but not in local
         to_del = [doc_id['_id'] for doc_id in
-            self._dbcollection.find(fields=['_id'])
-            if doc_id['_id'] not in id_list]
+                  self._dbcollection.find(fields=['_id'])
+                  if doc_id['_id'] not in id_list]
 
         if len(to_del) > 0:
             for doc_id in to_del:
                 self._dbcollection.remove({'_id': ObjectId(doc_id)})
 
     def load(self):
-        """Load list of collections from the cloud."""        
+        """Load list of collections from the cloud."""
         # Get each document and place in collections list
         collections = []
         for doc in self._dbcollection.find():

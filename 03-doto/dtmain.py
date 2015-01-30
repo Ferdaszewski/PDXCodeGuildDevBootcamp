@@ -10,7 +10,6 @@ ferdaszewski@gmail.com
 # TODO: verify pep8 compliance
 # TODO: assignment of tasks with @username - new task attribute?
 # TODO: load assigned tasks to cloud, pull my assigned tasks to collection
-# TODO: delete collection from cloud when deleted from master list - load as option not manditory
 import datetime
 import sys
 
@@ -21,7 +20,9 @@ class DoToApp(object):
     def __init__(self):
         self.storage = None
         self.user = None
-    
+        self.master_collection = None
+        self.current_collection = None
+
     def clear_screen(self,):
         """Clear screen, return cursor to top left, and display banner.
         Thanks to Graham King http://www.darkcoding.net for code snippet
@@ -62,7 +63,7 @@ class DoToApp(object):
             tag_filter (list): A list of tags (str) to filter the tasks
             by. if None, print out all tasks.
         """
-        # TODO: Mark late and today on dates
+        # TODO: Mark late and due today dates
         print "\t\t" + self.current_collection.name
         if tag_filter not in (None, []):
             print "Filter:", tag_filter
@@ -86,7 +87,8 @@ class DoToApp(object):
     def display_task(self, task):
         """Displays a task object passed in as an arg."""
         checked = " "
-        if task.done is True: checked = "X"
+        if task.done is True:
+            checked = "X"
         print "[{0}] {1}\n*Tags* | {2} |\n".format(
             checked, task._entry, ' | '.join(task.tags))
 
@@ -122,7 +124,7 @@ class DoToApp(object):
         """
         tag_filter = None
         while True:
-            self.clear_screen()            
+            self.clear_screen()
             self.display(tag_filter)
             command = raw_input(
                 "Enter command (? for help) > ").strip().lower()
@@ -145,7 +147,7 @@ class DoToApp(object):
                 tag_list = [tag.strip() for tag in tags.split(',')]
                 try:
                     new_task = doto.Task(self.user, description,
-                        due_date, tag_list)
+                                         due_date, tag_list)
                 except (NameError, ValueError) as e:
                     print "Task not created. Error: ", e
                     raw_input("Press Enter to continue.")
@@ -174,7 +176,7 @@ class DoToApp(object):
                             "Overwrite existing tags? y/n > "
                             ).strip().lower()
                         if user_input in ('y', 'yes'):
-                            del sel_task.tags                        
+                            del sel_task.tags
                         user_tags = raw_input(
                             "Enter new tags (comma separated) (optional). > ")
                         sel_task.tags = [
@@ -198,7 +200,7 @@ class DoToApp(object):
                 for i, collection in enumerate(self.master_collection):
                     print "Collection ID: %d | %s" % (i, collection.name)
                 print ""
-                
+
                 # Select collection and validate
                 selection = raw_input(
                     "Enter Collection ID or 'new' for a new collection. > ")
@@ -223,7 +225,7 @@ class DoToApp(object):
                 while selection != 'v':
                     selection = raw_input("Enter command. > ")
                     selection = selection.strip().lower()
-                    
+
                     # Rename collection and set to current collection
                     if selection == 'r':
                         new_name = raw_input("Enter new collection name. > ")
@@ -231,7 +233,7 @@ class DoToApp(object):
                         break
 
                     # Delete collection and set current to default
-                    elif selection =='x':
+                    elif selection == 'x':
 
                         # There must be at least one collection
                         if len(self.master_collection) <= 1:
@@ -250,7 +252,7 @@ class DoToApp(object):
                 user_input = raw_input(
                     "Enter tag(s) to display (comma separated). > ")
                 tag_filter = [tag.strip() for tag in user_input.split(',')
-                    if tag is not '']
+                              if tag is not '']
             elif command in ('a', 'archive'):
                 self.clear_screen()
                 print "%s - Archive" % self.current_collection.name
