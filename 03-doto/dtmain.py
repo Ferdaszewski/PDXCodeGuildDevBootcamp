@@ -8,6 +8,9 @@ ferdaszewski@gmail.com
 """
 # TODO: comment code and write all docstrings
 # TODO: verify pep8 compliance
+# TODO: assignment of tasks with @username - new task attribute?
+# TODO: load assigned tasks to cloud, pull my assigned tasks to collection
+# TODO: delete collection from cloud when deleted from master list
 import datetime
 import sys
 
@@ -56,6 +59,7 @@ class DoToApp(object):
             tag_filter (list): A list of tags (str) to filter the tasks
             by. if None, print out all tasks.
         """
+        # TODO: Mark late and today on dates
         print "\t\t" + self.current_collection.name
         if tag_filter not in (None, []):
             print "Filter:", tag_filter

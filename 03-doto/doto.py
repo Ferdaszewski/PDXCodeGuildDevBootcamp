@@ -10,10 +10,13 @@ import datetime
 import json
 import jsonpickle
 import os
+from bson.objectid import ObjectId
 import pickle
+import pymongo
 
-# Program constants
 LOCAL_FILE = './dotolist.dat'
+MONGOHQ_URL = ("mongodb://codeguild:AsecretPassw00rd"
+             + "@dharma.mongohq.com:10023/qscfadm")
 
 
 class Collection(object):
@@ -34,6 +37,7 @@ class Collection(object):
         self._tasks = collections.defaultdict(list)
         self._archive_tasks = []
         self.name = collection_name
+        self.db_id = None
 
     def get_due_dates(self):
         """Returns a sorted list of due dates in the collection."""
@@ -100,14 +104,52 @@ class Collection(object):
         self.archive()
         return self._archive_tasks
 
-    def json_serialize(self):
-        # TODO: Serialize to a JSON string and return it.
+    def serialize(self):
+        """Serialize attributes as key/value pairs to a dict. Serialize
+        all tasks contained in collection. Return the dictionary.
+        """
+        # Clean collection and archive done tasks.
         self.archive()
 
+        collection_dict = {}
+        collection_dict['name'] = self.name
+        collection_dict['db_id'] = self.db_id
 
-    def json_desearilze(self, json_data):
-        # TODO: De-serialize JSON data, instantiate collection, add tasks and return
-        self.archive()
+        # Serialize all current tasks and put in dictionary
+        tasks_dict = {}
+        for date in self.get_due_dates():
+            tasks_dict[date] = [
+                task.serialize() for task in self._tasks[date]]
+        collection_dict['tasks'] = tasks_dict
+
+        # Serialize all archive tasks and put in dictionary
+        archive_list = [task.serialize() for task in self._archive_tasks]
+        collection_dict['archive'] = archive_list
+
+        return collection_dict
+
+    @staticmethod
+    def deserialize(data):
+        """De-serialize data and return an instance of the class.
+
+        Args:
+            data (dict): Dictionary with key/values to create the
+                collection.
+        """
+        new_collection = Collection(data['name'])
+        new_collection.db_id = data['db_id']
+
+        # Deserialize tasks and assign to collection attribute
+        for date in data['tasks'].keys():
+            new_collection._tasks['date'] = [
+                Task.deserialize(task) for task in data['tasks'][date]]
+
+        # Deserialize archived tasks and assign to collection attribute
+        new_collection._archive = [
+            task.deserialize() for task in data['archive']]
+
+        new_collection.archive()
+        return new_collection
 
 
 class Task(object):
@@ -130,7 +172,7 @@ class Task(object):
                 be tagged.
             tags (list, public): Supports get, set and del.
             entry_time (datetime.datetime): Timestamp when created
-            id (??): A hash of...???
+            task_id (??): A hash of...???
             creator (str): Name of user that created the task.
             done (bool): False while not finished.
             done_date (datetime.datetime): Timestamp when task is done.
@@ -140,9 +182,10 @@ class Task(object):
         Args:
             user (str): Name of application user and owner of the task.
             description (str): Body of the task, limited to 140 chars.
-            due_date (str, optional): Due date for task in "year-mm-dd"
-                format, or None if there is not due date for the task.
-            tag_list (list, optional): List of tags (str) to add to task.
+            due_date (str, or datetime.date optional): Due date for task
+                in "year-mm-dd" format, or None if there is not due date
+                for the task.
+            tag_list (list, optional): List of tags (str) for task.
                 The user is always a tag on a new task.
 
         Methods:
@@ -150,7 +193,7 @@ class Task(object):
         """
         # Generated elements
         self.entry_time = datetime.datetime.now()
-        self.id = 0 # TODO - Hash to match cloud storage?
+        self.task_id = 0 # TODO - task_id to match cloud storage?
         self.creator = user
         self.done = False
         self.done_date = None
@@ -200,8 +243,12 @@ class Task(object):
         """due_date in year-mm-dd format and it cannot be before today.
         """
         if value not in (None, ''):
-            year, month, day = (int(i) for i in value.split('-'))
-            self._due_date = datetime.date(year, month, day)
+            # Can take a string or a datetime.date object
+            if isinstance(value, datetime.date):
+                self._due_date = value
+            else:
+                year, month, day = (int(i) for i in value.split('-'))
+                self._due_date = datetime.date(year, month, day)
             if self._due_date < datetime.date.today():
                 raise ValueError("Due date cannot be before today")
         else:
@@ -212,7 +259,7 @@ class Task(object):
 
     def __str__(self):
         """String representation of all task attributes."""
-        s = "ID: " + str(self.id)
+        s = "task_id: " + str(self.task_id)
         s += "\nTask: {0}\nDue Date: {1}\nTags: {2}\n".format(self._entry,
             self._due_date, self.tags)
         s += "Created By: {0} {1}\nDone?: {2}\nMarked Done By: {3} {4}".format(
@@ -226,34 +273,52 @@ class Task(object):
         self.done_date = datetime.datetime.now()
         self.done_user = user
 
-    def json_serialize(self):
-        # TODO: Serialize to a JSON string and return it.
+    def serialize(self):
+        """Serialize attributes as key/value pairs to a dict."""
         task_dict = {}
         task_dict['entry_time'] = self.entry_time
+        task_dict['task_id'] = self.task_id
+        task_dict['creator'] = self.creator
+        task_dict['done'] = self.done
+        task_dict['done_date'] = self.done_date
+        task_dict['done_user'] = self.done_user
+        task_dict['entry'] = self._entry
+        task_dict['due_date'] = self._due_date
+        task_dict['tags'] = self._tags
+        return task_dict
 
+    @staticmethod
+    def deserialize(data):
+        """De-serialize data and return an instance of the class.
 
+        Args:
+            data (dict): Dictionary with key/values to create a task.
+        """
+        # Internal object attribures
+        new_entry_time = data['entry_time']
+        new_task_id = data['task_id']
+        new_creator = data['creator']
+        new_done = data['done']
+        new_done_date = data['done_date']
+        new_done_user = data['done_user']
+        
+        # External object attributes
+        new_entry = data['entry']
+        new_due_date = data['due_date']
+        new_tags = data['tags']
 
+        # Instantiate a new Task object
+        new_task = Task(new_creator, new_entry, new_due_date, new_tags)
 
-        self.entry_time = datetime.datetime.now()
-        self.id = 0 # TODO - Hash to match cloud storage?
-        self.creator = user
-        self.done = False
-        self.done_date = None
-        self.done_user= None
+        # Assign other attributes to new task
+        new_task.entry_time = new_entry_time
+        new_task.task_id = new_task_id
+        new_task.creator = new_creator
+        new_task.done = new_done
+        new_task.done_date = new_done_date
+        new_task.done_user = new_done_user
 
-        # Required elements
-        self._entry = None
-        self.setentry(description)
-        self._due_date = None
-        self.setdue_date(date_due)
-
-        # Optional element
-        self._tags = [user]
-        self.settags(tag_list)
-
-    def json_desearilze(self, json_data):
-        # TODO: De-serialize JSON data, instantiate task object and return
-        pass
+        return new_task
 
 
 class LocalStorage(object):
@@ -281,31 +346,38 @@ class LocalStorage(object):
 
 
 class CloudStorage(object):
-    """Cloud storage of collections in JSON format."""
+    """Cloud storage of collections in MongoDB database."""
+    def __init__(self):
+        # Connect to the database and collection
+        self._dbcollection = pymongo.MongoClient(MONGOHQ_URL).qscfadm.josh
 
     def save(self, collections):
         """Saves a list of collections to the cloud."""
-        # TODO: Serialize collections to JSON
-        # TODO: Write JSON data to cloud
-        jpick = jsonpickle.encode(collections)
-        with open("./tempjp.json", 'w') as f:
-            f.write(jpick)
+        
+        # Serialize collections and tasks and save to cloud
+        for collection in collections:
+            coll_dict = {}
+            coll_dict['jp_collection'] = jsonpickle.encode(collection.serialize())
+            
+            # Add _id if it exists
+            if collection.db_id not in (None, ''):
+                coll_dict['_id'] = ObjectId(collection.db_id)
+            
+            self._dbcollection.save(coll_dict)
+
 
     def load(self):
         """Load list of collections from the cloud."""
-        # TODO: read JSON data from cloud
-        # TODO: deserialize JSON data and load collections
-        # TODO: clean collections of all done tasks
-        # TODO: return list of collections
-        if os.path.isfile("./tempjp.json"):
-            with open("./tempjp.json", 'r') as f:
-                collections = jsonpickle.decode(f.read())
-        else:
-            print "Cannot find file:", "./tempjp.json"
-            raw_input("Loading empty collection.")
-            collections = [Collection("My List")]
         
-        # Clean collection of all done tasks and move to archive
-        for collection in collections:
-            collection.archive()
+        # Get each document and place in collections list
+        collections = []
+        for doc in self._dbcollection.find():
+
+            # decode and deserialize data
+            json_data = jsonpickle.decode(doc['jp_collection'])
+            collection = Collection.deserialize(json_data)
+
+            # Add database id to collection object
+            collection.db_id = doc['_id']
+            collections.append(collection)
         return collections
