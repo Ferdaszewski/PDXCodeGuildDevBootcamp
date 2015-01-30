@@ -366,11 +366,12 @@ class CloudStorage(object):
             self._dbcollection.save(coll_dict)
 
         # Delete documents that are in cloud but not in local
-        to_del = [doc_id for doc_id in
-            self._dbcollection.find(fields=['_id']) if doc_id not in id_list]
+        to_del = [doc_id['_id'] for doc_id in
+            self._dbcollection.find(fields=['_id'])
+            if doc_id['_id'] not in id_list]
         if len(to_del) > 0:
             for doc_id in to_del:
-                self._dbcollection.remove(doc_id)
+                self._dbcollection.remove({'_id': ObjectId(doc_id)})
 
     def load(self):
         """Load list of collections from the cloud."""        
@@ -385,4 +386,7 @@ class CloudStorage(object):
             # Add database id to collection object
             collection.db_id = doc['_id']
             collections.append(collection)
+        if len(collections) <= 0:
+            # Return empty collection
+            return [Collection("My Collection")]
         return collections

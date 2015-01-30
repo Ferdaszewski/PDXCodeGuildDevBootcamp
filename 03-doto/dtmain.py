@@ -47,7 +47,10 @@ class DoToApp(object):
             self.storage = doto.LocalStorage()
 
         # Load list of collections and set current to the default
-        self.master_collection = self.storage.load()
+        if raw_input("Load collections? y/n > ").strip().lower() == 'y':
+            self.master_collection = self.storage.load()
+        else:
+            self.master_collection = [doto.Collection("My List")]
         self.current_collection = self.master_collection[0]
         self.main()
 
