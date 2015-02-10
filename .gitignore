@@ -1,8 +1,7 @@
-# Address Book data file (binary)
+# File type to ignore
 *.dat
-
-# Address Book json data file
 *.json
-
-# compiled python module files
 *.pyc
+
+# Folders to ignore
+**/skeleton/*
