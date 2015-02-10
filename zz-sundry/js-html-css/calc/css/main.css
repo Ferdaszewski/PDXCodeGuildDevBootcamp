@@ -1,0 +1,20 @@
+.container {
+  text-align: center;
+  width: 425px
+}
+
+.result {
+  width: 100%;
+  font-size: 2em;
+  padding: .25em;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
+.hidden {
+  display: none;
+}
+
+.error {
+  background-color: tomato;
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Calculator</title>
+    <link rel="stylesheet" href="skeleton/normalize.css">
+    <link rel="stylesheet" href="skeleton/skeleton.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script type="text/javascript" src="js/calc.js"></script>
+  </head>
+  <body>
+    
+    <div class="container">
+
+      <h1>Calculator</h1>
+
+      <form id="calcform" name="calculator" method="post">
+        
+        <div class="row">
+          <div class="one-half column">
+            <label for="input_a">Number</label>
+            <input type="number" name="input_a">
+          </div>
+          <div class="one-half column">
+            <label for="input_b">Number</label>
+            <input type="number" name="input_b">
+          </div>
+        </div>
+
+        <div class="row">
+          <div id="button_wrapper">
+            <button type="button" name="addbutton" title="Addition!">Add</button>
+            <button type="button" name="multbutton" title="Multipyl!">Multiply</button>
+            <button type="button" name="divbutton" title="Divide!">Divide</button>
+          </div>
+        </div>
+
+      </form>
+
+      <div class="row">
+        <span id="result" class="result hidden"></span>
+      </div>
+
+    </div>
+  </body>
+</html>
