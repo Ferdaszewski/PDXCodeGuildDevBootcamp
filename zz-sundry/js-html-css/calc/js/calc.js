@@ -1,5 +1,5 @@
 function calculate(evt) {
-  button = evt.target;
+  var button = evt.target;
   var resultDisplay = document.getElementById('result');
   resultDisplay.className = "result hidden";
 
@@ -19,8 +19,7 @@ function calculate(evt) {
     resultDisplay.className += ' error';
   }
   else {
-    var operator = button.name;
-    switch (operator) {
+    switch (button.name) {
       case "addbutton":
         result = a + b;
         break;
