@@ -1,6 +1,7 @@
 # Files
 *.dat
 *.json
+*.jpg
 
 # DB
 *.sqlite3
